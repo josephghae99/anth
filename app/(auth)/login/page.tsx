@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -16,9 +16,15 @@ export default function Page() {
 
   const [email, setEmail] = useState("");
 
-  const [state, formAction] = useFormState(login, {
+  const [state, formAction] = useFormState<
+    typeof login,
+    FormData,
+    LoginActionState
+  >(login, {
     status: "idle",
   });
+
+  const { pending } = useFormStatus();
 
   useEffect(() => {
     if (state.status === "failed") {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
+import { useFormState, useFormStatus } from "react-dom";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,9 +15,15 @@ export default function Page() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
-  const [state, formAction] = useFormState(register, {
+  const [state, formAction] = useFormState<
+    typeof register,
+    FormData,
+    RegisterActionState
+  >(register, {
     status: "idle",
   });
+
+  const { pending } = useFormStatus();
 
   useEffect(() => {
     if (state.status === "user_exists") {
