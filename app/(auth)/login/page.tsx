@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useFormState } from "react-dom";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AuthForm } from "@/components/custom/auth-form";
@@ -15,12 +16,9 @@ export default function Page() {
 
   const [email, setEmail] = useState("");
 
-  const [state, formAction] = useActionState<LoginActionState, FormData>(
-    login,
-    {
-      status: "idle",
-    },
-  );
+  const [state, formAction] = useFormState(login, {
+    status: "idle",
+  });
 
   useEffect(() => {
     if (state.status === "failed") {
