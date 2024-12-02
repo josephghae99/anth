@@ -174,11 +174,11 @@ export async function POST(request: Request) {
         execute: async ({ reservationId }) => {
           const reservation = await getReservationById({ id: reservationId });
 
-          if (reservation.hasCompletedPayment) {
-            return { hasCompletedPayment: true };
-          } else {
+          if (!reservation) {
             return { hasCompletedPayment: false };
           }
+
+          return { hasCompletedPayment: reservation.hasCompletedPayment };
         },
       },
       displayBoardingPass: {
@@ -252,6 +252,10 @@ export async function DELETE(request: Request) {
 
   try {
     const chat = await getChatById({ id });
+
+    if (!chat) {
+      return new Response("Chat not found", { status: 404 });
+    }
 
     if (chat.userId !== session.user.id) {
       return new Response("Unauthorized", { status: 401 });
