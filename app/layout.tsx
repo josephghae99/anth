@@ -1,35 +1,34 @@
-import { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/react";
+import { GeistSans } from "geist/font/sans";
 import { Toaster } from "sonner";
-
-import { Navbar } from "@/components/custom/navbar";
-import { ThemeProvider } from "@/components/custom/theme-provider";
 
 import "./globals.css";
 
-export const metadata: Metadata = {
-  metadataBase: new URL("https://gemini.vercel.ai"),
-  title: "Next.js Gemini Chatbot",
-  description: "Next.js chatbot template using the AI SDK and Gemini.",
+import { ThemeProvider } from "@/components/custom/theme-provider";
+
+export const metadata = {
+  title: "AI Travel Assistant",
+  description: "Your personal AI travel assistant powered by Claude and Amadeus",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className="antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className={GeistSans.className}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <Toaster position="top-center" />
-          <Navbar />
           {children}
+          <Toaster position="bottom-right" />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
