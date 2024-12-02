@@ -10,28 +10,42 @@ import { user, chat, User, reservation } from "./schema";
 // Optionally, if not using email/pass login, you can
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
-const POSTGRES_URL = process.env.POSTGRES_URL;
-if (!POSTGRES_URL) {
-  throw new Error("POSTGRES_URL is not defined in environment variables");
-}
 
-let client = postgres(`${POSTGRES_URL}?sslmode=require`);
-let db = drizzle(client);
+let db: ReturnType<typeof drizzle>;
+
+try {
+  const POSTGRES_URL = process.env.POSTGRES_URL;
+  if (!POSTGRES_URL) {
+    console.warn("POSTGRES_URL is not defined in environment variables");
+    throw new Error("Database connection not available");
+  }
+
+  const client = postgres(`${POSTGRES_URL}?sslmode=require`);
+  db = drizzle(client);
+} catch (error) {
+  console.error("Failed to initialize database connection:", error);
+  // Provide a mock db during build time
+  db = {
+    select: () => Promise.resolve([]),
+    insert: () => Promise.resolve([]),
+    update: () => Promise.resolve([]),
+    delete: () => Promise.resolve([]),
+  } as any;
+}
 
 export async function getUser(email: string): Promise<Array<User>> {
   try {
     return await db.select().from(user).where(eq(user.email, email));
   } catch (error) {
     console.error("Failed to get user from database");
-    throw error;
+    return [];
   }
 }
 
 export async function createUser(email: string, password: string) {
-  let salt = genSaltSync(10);
-  let hash = hashSync(password, salt);
-
   try {
+    let salt = genSaltSync(10);
+    let hash = hashSync(password, salt);
     return await db.insert(user).values({ email, password: hash });
   } catch (error) {
     console.error("Failed to create user in database");
@@ -90,7 +104,7 @@ export async function getChatsByUserId({ id }: { id: string }) {
       .orderBy(desc(chat.createdAt));
   } catch (error) {
     console.error("Failed to get chats by user from database");
-    throw error;
+    return [];
   }
 }
 
@@ -100,7 +114,7 @@ export async function getChatById({ id }: { id: string }) {
     return selectedChat;
   } catch (error) {
     console.error("Failed to get chat by id from database");
-    throw error;
+    return null;
   }
 }
 
@@ -113,22 +127,31 @@ export async function createReservation({
   userId: string;
   details: any;
 }) {
-  return await db.insert(reservation).values({
-    id,
-    createdAt: new Date(),
-    userId,
-    hasCompletedPayment: false,
-    details: JSON.stringify(details),
-  });
+  try {
+    return await db.insert(reservation).values({
+      id,
+      createdAt: new Date(),
+      userId,
+      hasCompletedPayment: false,
+      details: JSON.stringify(details),
+    });
+  } catch (error) {
+    console.error("Failed to create reservation");
+    throw error;
+  }
 }
 
 export async function getReservationById({ id }: { id: string }) {
-  const [selectedReservation] = await db
-    .select()
-    .from(reservation)
-    .where(eq(reservation.id, id));
-
-  return selectedReservation;
+  try {
+    const [selectedReservation] = await db
+      .select()
+      .from(reservation)
+      .where(eq(reservation.id, id));
+    return selectedReservation;
+  } catch (error) {
+    console.error("Failed to get reservation");
+    return null;
+  }
 }
 
 export async function updateReservation({
@@ -138,10 +161,15 @@ export async function updateReservation({
   id: string;
   hasCompletedPayment: boolean;
 }) {
-  return await db
-    .update(reservation)
-    .set({
-      hasCompletedPayment,
-    })
-    .where(eq(reservation.id, id));
+  try {
+    return await db
+      .update(reservation)
+      .set({
+        hasCompletedPayment,
+      })
+      .where(eq(reservation.id, id));
+  } catch (error) {
+    console.error("Failed to update reservation");
+    throw error;
+  }
 }
