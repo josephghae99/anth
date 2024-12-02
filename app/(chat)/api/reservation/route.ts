@@ -2,21 +2,24 @@ import { auth } from "@/app/(auth)/auth";
 import { getReservationById, updateReservation } from "@/db/queries";
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-
-  if (!id) {
-    return new Response("Not Found!", { status: 404 });
-  }
-
-  const session = await auth();
-
-  if (!session || !session.user) {
-    return new Response("Unauthorized!", { status: 401 });
-  }
-
   try {
+    const session = await auth();
+    if (!session?.user) {
+      return new Response("Unauthorized!", { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return new Response("Missing reservation ID!", { status: 400 });
+    }
+
     const reservation = await getReservationById({ id });
+
+    if (!reservation) {
+      return new Response("Reservation not found!", { status: 404 });
+    }
 
     if (reservation.userId !== session.user.id) {
       return new Response("Unauthorized!", { status: 401 });
@@ -24,9 +27,8 @@ export async function GET(request: Request) {
 
     return Response.json(reservation);
   } catch (error) {
-    return new Response("An error occurred while processing your request!", {
-      status: 500,
-    });
+    console.error("Failed to get reservation:", error);
+    return new Response("Internal Server Error", { status: 500 });
   }
 }
 
