@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,13 +13,17 @@ import { register, RegisterActionState } from "../actions";
 export default function Page() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [state, setState] = useState<RegisterActionState>({ status: "idle" });
 
-  const [state, formAction] = useFormState<RegisterActionState>(
-    async (prevState: RegisterActionState, formData: FormData) => {
-      return register(prevState, formData);
-    },
-    { status: "idle" }
-  );
+  const handleSubmit = async (formData: FormData) => {
+    try {
+      setEmail(formData.get("email") as string);
+      const result = await register({ status: "idle" }, formData);
+      setState(result);
+    } catch (error) {
+      setState({ status: "failed" });
+    }
+  };
 
   useEffect(() => {
     if (state.status === "user_exists") {
@@ -33,12 +36,7 @@ export default function Page() {
       toast.success("Account created successfully");
       router.refresh();
     }
-  }, [state, router]);
-
-  const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get("email") as string);
-    formAction(formData);
-  };
+  }, [state.status, router]);
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">

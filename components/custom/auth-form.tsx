@@ -1,52 +1,47 @@
+import { useRef } from "react";
+
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-export function AuthForm({
-  action,
-  children,
-  defaultEmail = "",
-}: {
-  action: any;
+interface AuthFormProps {
+  action: (formData: FormData) => Promise<void>;
   children: React.ReactNode;
   defaultEmail?: string;
-}) {
-  return (
-    <form action={action} className="flex flex-col gap-4 px-4 sm:px-16">
-      <div className="flex flex-col gap-2">
-        <Label
-          htmlFor="email"
-          className="text-zinc-600 font-normal dark:text-zinc-400"
-        >
-          Email Address
-        </Label>
+}
 
+export function AuthForm({ action, children, defaultEmail }: AuthFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    await action(formData);
+  };
+
+  return (
+    <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4 px-4 sm:px-16">
+      <div>
+        <Label htmlFor="email">Email address</Label>
         <Input
           id="email"
-          name="email"
-          className="bg-muted text-md md:text-sm border-none"
           type="email"
-          placeholder="user@acme.com"
-          autoComplete="email"
+          name="email"
+          placeholder="name@example.com"
           required
           defaultValue={defaultEmail}
         />
-
-        <Label
-          htmlFor="password"
-          className="text-zinc-600 font-normal dark:text-zinc-400"
-        >
-          Password
-        </Label>
-
+      </div>
+      <div>
+        <Label htmlFor="password">Password</Label>
         <Input
           id="password"
-          name="password"
-          className="bg-muted text-md md:text-sm border-none"
           type="password"
+          name="password"
+          placeholder="••••••••"
           required
+          minLength={6}
         />
       </div>
-
       {children}
     </form>
   );

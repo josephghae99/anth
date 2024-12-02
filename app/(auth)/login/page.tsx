@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useFormState } from "react-dom";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,13 +13,17 @@ import { login, LoginActionState } from "../actions";
 export default function Page() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [state, setState] = useState<LoginActionState>({ status: "idle" });
 
-  const [state, formAction] = useFormState<LoginActionState>(
-    async (prevState: LoginActionState, formData: FormData) => {
-      return login(prevState, formData);
-    },
-    { status: "idle" }
-  );
+  const handleSubmit = async (formData: FormData) => {
+    try {
+      setEmail(formData.get("email") as string);
+      const result = await login({ status: "idle" }, formData);
+      setState(result);
+    } catch (error) {
+      setState({ status: "failed" });
+    }
+  };
 
   useEffect(() => {
     if (state.status === "failed") {
@@ -31,11 +34,6 @@ export default function Page() {
       router.refresh();
     }
   }, [state.status, router]);
-
-  const handleSubmit = (formData: FormData) => {
-    setEmail(formData.get("email") as string);
-    formAction(formData);
-  };
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-background">
